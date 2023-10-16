@@ -1,7 +1,6 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include "SD.h"
-#include <SimpleFTPServer.h>
 
 #ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -49,52 +48,10 @@ String _password = "123456789"; // Для хранения пароля сети
 int timezone = 3;               // часовой пояс GTM
 
 #define uS_TO_S_FACTOR 1000000
-
-FtpServer ftpSrv;   //set #define FTP_DEBUG in ESP8266FtpServer.h to see ftp verbose on serial
-void _callback(FtpOperation ftpOperation, unsigned int freeSpace, unsigned int totalSpace){
-  Serial.print(">>>>>>>>>>>>>>> _callback " );
-  Serial.print(ftpOperation);
-  /* FTP_CONNECT,
-   * FTP_DISCONNECT,
-   * FTP_FREE_SPACE_CHANGE
-   */
-  Serial.print(" ");
-  Serial.print(freeSpace);
-  Serial.print(" ");
-  Serial.println(totalSpace);
-
-  // freeSpace : totalSpace = x : 360
-
-  if (ftpOperation == FTP_CONNECT) Serial.println(F("CONNECTED"));
-  if (ftpOperation == FTP_DISCONNECT) Serial.println(F("DISCONNECTED"));
-};
-void _transferCallback(FtpTransferOperation ftpOperation, const char* name, unsigned int transferredSize){
-  Serial.print(">>>>>>>>>>>>>>> _transferCallback " );
-  Serial.print(ftpOperation);
-  /* FTP_UPLOAD_START = 0,
-   * FTP_UPLOAD = 1,
-   *
-   * FTP_DOWNLOAD_START = 2,
-   * FTP_DOWNLOAD = 3,
-   *
-   * FTP_TRANSFER_STOP = 4,
-   * FTP_DOWNLOAD_STOP = 4,
-   * FTP_UPLOAD_STOP = 4,
-   *
-   * FTP_TRANSFER_ERROR = 5,
-   * FTP_DOWNLOAD_ERROR = 5,
-   * FTP_UPLOAD_ERROR = 5
-   */
-  Serial.print(" ");
-  Serial.print(name);
-  Serial.print(" ");
-  Serial.println(transferredSize);
-};
-  
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   Serial.begin(115200);
-   Serial.println("Start 1-WIFI");
+  Serial.println("Start 1-WIFI");
   //Запускаем WIFI
   WIFIinit();
   // Получаем время из сети
@@ -159,19 +116,6 @@ void setup() {
     return;
   }
 
-  /////FTP Setup, ensure SPIFFS is started before ftp;  /////////
-
-  /////FTP Setup, ensure SPIFFS is started before ftp;  /////////
-  SPI.begin(14, 12, 15, 13); //SCK, MISO, MOSI,SS
-
-  if (SD.begin(13, SPI)) {
-      Serial.println("SD opened!");
-
-      ftpSrv.setCallback(_callback);
-      ftpSrv.setTransferCallback(_transferCallback);
-
-      ftpSrv.begin("esp8266","esp8266");    //username, password for ftp.   (default 21, 50009 for PASV)
-  }
   camera_fb_t * fb = NULL;
  
   // Take Picture with Camera
@@ -187,7 +131,7 @@ void setup() {
    String Time = ""; // Строка для результатов времени
    Time += ctime(&now); // Преобразуем время в строку формата Thu Jan 19 00:55:35 2017
   // Path where new picture will be saved in SD Card
-  String path = "/" + String(pictureNumber)+"_"+GetTime()+"_"+GetDate()+".jpg";
+  String path = "/"+GetDate()+ "_"+GetTime()+String(pictureNumber)+".jpg";
  
   fs::FS &fs = SD_MMC;
   Serial.printf("Picture file name: %s\n", path.c_str());
@@ -228,7 +172,7 @@ time_t now = time(nullptr); // получаем время с помощью б�
  String Time = ""; // Строка для результатов времени
  Time += ctime(&now); // Преобразуем время в строку формата Thu Jan 19 00:55:35 2017
       Serial.println(Time);
-    Serial.println("ITime Ready!");
+    Serial.println("ITime Ready!" + GetDate() + "-" + GetDate());
     Serial.println(GetTime());
     Serial.println(GetDate());
     delay(10000);
